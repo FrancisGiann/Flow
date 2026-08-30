@@ -192,19 +192,6 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
     }
   };
 
-  // Weakness type badge colors
-  const getWeaknessBadgeColor = (type) => {
-    switch (type) {
-      case 'trigram':
-        return 'bg-purple-500/10 text-purple-300 border-purple-500/30';
-      case 'bigram':
-        return 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30';
-      case 'char':
-      default:
-        return 'bg-amber-500/10 text-amber-300 border-amber-500/30';
-    }
-  };
-
   // Format total practice time
   const formatTime = (ms) => {
     if (!ms) return '0s';
@@ -277,8 +264,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
 
   if (loading && !stats) {
     return (
-      <div className="w-full max-w-4xl mx-auto py-24 flex flex-col items-center justify-center gap-4 font-mono text-zinc-500">
-        <div className="w-8 h-8 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+      <div className="loading-state">
         <p className="text-sm">Synthesizing telemetry & neural insights...</p>
       </div>
     );
@@ -287,15 +273,15 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
   const hasSessions = sessions && sessions.length > 0;
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-6 animate-in fade-in duration-300 space-y-8">
+    <div className="dashboard">
       {/* Top Banner & Quick Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800/60">
+      <div className="dashboard-header">
         <div>
-          <h2 className="text-2xl font-bold font-mono tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <Activity className="w-6 h-6 text-emerald-400" />
+          <h2 className="dashboard-heading">
+            <Activity className="w-6 h-6" />
             <span>PROGRESS & TELEMETRY</span>
           </h2>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="dashboard-subtitle">
             Real-time biometric typing flow, AI trend narration, and muscle memory stats.
           </p>
         </div>
@@ -303,7 +289,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
         <div className="flex items-center gap-3">
           <button
             onClick={onStartTyping}
-            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+            className="action-primary"
           >
             <Keyboard className="w-4 h-4" />
             <span>Resume Typing</span>
@@ -314,7 +300,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
 
       {/* Account / Cloud Sync Bar */}
       {!user?.email || isAnonymous ? (
-        <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5 transition-all">
+        <div className="dashboard-account">
           {authMode === 'idle' && (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs font-mono">
               <div className="flex items-center gap-2 text-zinc-400">
@@ -335,7 +321,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
                   setAuthMode('login');
                   setAuthMessage(null);
                 }}
-                className="text-zinc-500 hover:text-zinc-300 text-[11px] transition-colors cursor-pointer self-start sm:self-auto"
+                className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors cursor-pointer self-start sm:self-auto"
               >
                 Log in to existing account
               </button>
@@ -381,7 +367,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
                   <span>Save Progress</span>
                 </button>
               </form>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] font-mono text-zinc-500">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono text-zinc-500">
                 <span>We'll send a passwordless link to preserve your typing history.</span>
                 <button
                   type="button"
@@ -436,7 +422,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
                   <span>Send Magic Link</span>
                 </button>
               </form>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] font-mono text-zinc-500">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono text-zinc-500">
                 <span>A magic login link will be emailed to you immediately.</span>
                 <button
                   type="button"
@@ -476,14 +462,14 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
       ) : (
         <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-zinc-900/40 border border-zinc-800/70 text-xs font-mono text-zinc-400">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true" />
             <span>
               Signed in as <strong className="text-zinc-200 font-semibold">{user.email}</strong>
             </span>
           </div>
           <button
             onClick={handleSignOut}
-            className="text-zinc-500 hover:text-zinc-300 text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="text-zinc-500 hover:text-zinc-300 text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
             title="Sign out on this device"
           >
             <LogOut className="w-3 h-3" />
@@ -492,31 +478,27 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
         </div>
       )}
 
-      {/* AI Progress Narration Hero Card */}
-      <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-zinc-950/80 border border-emerald-500/20 shadow-2xl relative overflow-hidden backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="dashboard-overview-grid">
+      {/* AI Progress Narration Hero */}
+      <div className="dashboard-coach">
 
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-semibold">
+        <div className="dashboard-coach-header">
+          <div className="dashboard-section-heading">
+            <Sparkles className="w-4 h-4" />
+            <span className="dashboard-coach-label">
                 AI Progress Coach
-              </span>
-              {narration?.source && (
-                <span className="text-[10px] text-zinc-500 ml-2 font-mono">
+            </span>
+            {narration?.source && (
+                <span className="text-xs text-zinc-500 ml-2 font-mono">
                   ({narration.source})
                 </span>
               )}
             </div>
-          </div>
 
           <button
             onClick={handleRefreshNarration}
             disabled={refreshingNarration}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-mono border border-zinc-700/50 transition-colors cursor-pointer disabled:opacity-50"
+            className="dashboard-refresh"
             title="Regenerate AI progress insight"
           >
             <RefreshCw className={`w-3 h-3 ${refreshingNarration ? 'animate-spin text-emerald-400' : ''}`} />
@@ -525,30 +507,30 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
         </div>
 
         {/* AI Headline */}
-        <h3 className="text-xl md:text-2xl font-bold text-zinc-100 font-sans tracking-tight mb-3">
+        <h3>
           {narration?.headline || 'Stepping into Flow'}
         </h3>
 
         {/* Plain Language Narration */}
-        <p className="text-sm md:text-base text-zinc-300 leading-relaxed font-sans mb-4">
+        <p className="dashboard-coach-copy">
           {narration?.narration ||
             'Complete a few typing passages to unlock deep neural feedback on your cadence, transition velocities, and keystroke consistency.'}
         </p>
 
         {/* Actionable Focus Box */}
         {narration?.focusRecommendation && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-800/30 text-xs">
-            <div className="flex items-center gap-2.5 text-emerald-300">
-              <Target className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="dashboard-tip">
+            <div className="flex items-center gap-2.5">
+              <Target className="w-4 h-4 shrink-0" />
               <span>
-                <strong className="text-emerald-200">Coach Tip:</strong> {narration.focusRecommendation}
+                <strong>Coach Tip:</strong> {narration.focusRecommendation}
               </span>
             </div>
 
             {weaknesses.length > 0 && onStartDrill && (
               <button
                 onClick={() => onStartDrill(weaknesses)}
-                className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-100 font-mono text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+                className="dashboard-action"
               >
                 <Sparkles className="w-3 h-3" />
                 <span>Launch Target Drill</span>
@@ -559,104 +541,105 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
       </div>
 
       {/* KPI Stats Overview Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+      <div className="dashboard-kpis">
         {/* Total Sessions */}
         <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-1">
             Sessions
           </span>
           <div className="text-2xl font-bold font-mono text-zinc-100">
             {stats?.totalSessions || sessions.length || 0}
           </div>
-          <span className="text-[10px] text-zinc-500 mt-1 font-mono">Recorded</span>
+          <span className="text-xs text-zinc-500 mt-1 font-mono">Recorded</span>
         </div>
 
         {/* Average WPM */}
         <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-1">
             Avg Speed
           </span>
           <div className="text-2xl font-bold font-mono text-emerald-400">
             {stats?.avgWpm || 0} <span className="text-xs font-normal text-zinc-500">WPM</span>
           </div>
-          <span className="text-[10px] text-zinc-500 mt-1 font-mono">Overall pace</span>
+          <span className="text-xs text-zinc-500 mt-1 font-mono">Overall pace</span>
         </div>
 
         {/* Peak WPM */}
         <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-1">
             Peak Speed
           </span>
           <div className="text-2xl font-bold font-mono text-cyan-400">
             {stats?.peakWpm || 0} <span className="text-xs font-normal text-zinc-500">WPM</span>
           </div>
-          <span className="text-[10px] text-zinc-500 mt-1 font-mono">Personal best</span>
+          <span className="text-xs text-zinc-500 mt-1 font-mono">Personal best</span>
         </div>
 
         {/* Accuracy */}
         <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-1">
             Accuracy
           </span>
           <div className="text-2xl font-bold font-mono text-zinc-100">
             {stats?.avgAccuracy || 100}%
           </div>
-          <span className="text-[10px] text-zinc-500 mt-1 font-mono">Clean strike</span>
+          <span className="text-xs text-zinc-500 mt-1 font-mono">Clean strike</span>
         </div>
 
         {/* Total Time */}
         <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-1">
             Time Typed
           </span>
           <div className="text-2xl font-bold font-mono text-zinc-100">
             {formatTime(stats?.totalTimeMs)}
           </div>
-          <span className="text-[10px] text-zinc-500 mt-1 font-mono">In flow</span>
+          <span className="text-xs text-zinc-500 mt-1 font-mono">In flow</span>
         </div>
 
         {/* Characters Typed */}
         <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-1">
             Characters
           </span>
           <div className="text-2xl font-bold font-mono text-zinc-100">
             {stats?.totalChars ? stats.totalChars.toLocaleString() : '0'}
           </div>
-          <span className="text-[10px] text-zinc-500 mt-1 font-mono">Keystrokes</span>
+          <span className="text-xs text-zinc-500 mt-1 font-mono">Keystrokes</span>
         </div>
+      </div>
       </div>
 
       {/* Speed & Rhythm Progression Chart */}
       {hasSessions && chartData.length > 1 && (
-        <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/70 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+        <div className="dashboard-section">
+          <div className="dashboard-section-head">
             <div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                <h4 className="text-sm font-bold font-mono text-zinc-200 uppercase tracking-wider">
+              <div className="dashboard-section-heading">
+                <TrendingUp className="w-4 h-4" />
+                <h4 className="dashboard-section-title">
                   Speed Progression (Last {chartData.length} Sessions)
                 </h4>
               </div>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="dashboard-section-copy">
                 Hover over data points to inspect individual session metrics.
               </p>
             </div>
 
             {selectedPoint && (
-              <div className="text-xs font-mono px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center gap-3">
-                <span className="text-emerald-400 font-bold">{selectedPoint.wpm} WPM</span>
-                <span className="text-cyan-300">{selectedPoint.accuracy}% ACC</span>
-                <span className="text-zinc-400 truncate max-w-[150px]">{selectedPoint.title}</span>
+              <div className="dashboard-section-heading">
+                <span className="history-accent">{selectedPoint.wpm} WPM</span>
+                <span className="history-accent">{selectedPoint.accuracy}% ACC</span>
+                <span className="history-muted truncate max-w-[150px]">{selectedPoint.title}</span>
               </div>
             )}
           </div>
 
           {/* SVG Line Chart */}
-          <div className="w-full overflow-x-auto">
+          <div className="dashboard-chart">
             <svg
               viewBox={`0 0 ${chartDimensions.width} ${chartDimensions.height}`}
-              className="w-full h-44 text-zinc-500"
+              className="text-zinc-500"
             >
               {/* Horizontal Grid lines */}
               {[0, 0.33, 0.66, 1].map((pct, i) => {
@@ -669,15 +652,15 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
                       y1={y}
                       x2={chartDimensions.width - chartDimensions.padding}
                       y2={y}
-                      stroke="#27272a"
+                      stroke="var(--chart-grid)"
                       strokeDasharray="4 4"
                       strokeWidth="1"
                     />
                     <text
                       x={chartDimensions.padding - 6}
                       y={y + 3}
-                      fill="#71717a"
-                      fontSize="9"
+                      fill="var(--muted)"
+                      fontSize="12"
                       fontFamily="monospace"
                       textAnchor="end"
                     >
@@ -690,8 +673,8 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
               {/* Gradient defs */}
               <defs>
                 <linearGradient id="wpmGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="var(--chart)" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="var(--chart)" stopOpacity="0" />
                 </linearGradient>
               </defs>
 
@@ -707,7 +690,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
               {polylinePoints && (
                 <polyline
                   fill="none"
-                  stroke="#34d399"
+                  stroke="var(--chart)"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -728,7 +711,9 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
                       cx={pt.x}
                       cy={pt.y}
                       r={isSelected ? 6 : 4}
-                      className="fill-zinc-950 stroke-emerald-400 transition-all duration-150"
+                      className="transition-all duration-150"
+                      fill="var(--surface)"
+                      stroke="var(--chart)"
                       strokeWidth={isSelected ? '3' : '2'}
                     />
                   </g>
@@ -740,15 +725,15 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
       )}
 
       {/* Weakness Matrix & Targeted AI Drills */}
-      <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/70 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-2.5">
-            <Brain className="w-5 h-5 text-purple-400" />
+      <div className="dashboard-section">
+        <div className="dashboard-section-head">
+          <div className="dashboard-section-heading">
+            <Brain className="w-5 h-5" />
             <div>
-              <h4 className="text-sm font-bold font-mono text-zinc-200 uppercase tracking-wider">
+              <h4 className="dashboard-section-title">
                 Keystroke & Bigram Weakness Matrix
               </h4>
-              <p className="text-xs text-zinc-500">
+              <p className="dashboard-section-copy">
                 Identified hesitation spots, miskeys, and high-latency keystroke transitions.
               </p>
             </div>
@@ -757,37 +742,35 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
           {weaknesses.length > 0 && onStartDrill && (
             <button
               onClick={() => onStartDrill(weaknesses)}
-              className="px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-200 text-xs font-mono font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+              className="dashboard-action"
             >
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <Sparkles className="w-3.5 h-3.5" />
               <span>Practice All Weak Spots</span>
             </button>
           )}
         </div>
 
         {weaknesses.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="dashboard-weakness-grid">
             {weaknesses.map((w, idx) => (
               <div
                 key={idx}
-                className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${getWeaknessBadgeColor(
-                  w.type
-                )}`}
+                className="dashboard-weakness"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center font-mono font-bold text-base text-zinc-100 shadow-inner">
+                  <div className="dashboard-weakness-token">
                     {w.token === ' ' ? '␣' : w.token}
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-xs text-zinc-200 font-mono">
+                      <span className="dashboard-weakness-name">
                         "{w.token === ' ' ? 'space' : w.token}"
                       </span>
-                      <span className="text-[10px] uppercase opacity-75 font-mono">
+                      <span className="dashboard-weakness-meta">
                         ({w.type})
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] mt-0.5 opacity-80 font-mono">
+                    <div className="dashboard-weakness-meta">
                       {w.errors > 0 && <span>{w.errors} errors</span>}
                       {w.avgLatencyMs > 0 && <span>{Math.round(w.avgLatencyMs)}ms latency</span>}
                     </div>
@@ -797,7 +780,8 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
                 {onStartDrill && (
                   <button
                     onClick={() => onStartDrill([w])}
-                    className="p-1.5 rounded-lg bg-black/30 hover:bg-black/60 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                    className="dashboard-drill-one"
+                    type="button"
                     title={`Drill "${w.token}"`}
                   >
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -807,37 +791,37 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
             ))}
           </div>
         ) : (
-          <div className="p-8 rounded-xl bg-zinc-950/40 border border-zinc-800/60 text-center flex flex-col items-center justify-center gap-2">
-            <ShieldCheck className="w-8 h-8 text-emerald-400/80" />
-            <p className="text-sm text-zinc-300 font-medium font-sans">
+          <div className="dashboard-empty">
+            <ShieldCheck className="w-8 h-8" />
+            <strong>
               No prominent weak spots detected yet!
-            </p>
-            <p className="text-xs text-zinc-500 max-w-md">
+            </strong>
+            <span>
               As you practice more passages, Flow will automatically identify any hesitant key transitions and build custom AI drills.
-            </p>
+            </span>
           </div>
         )}
       </div>
 
       {/* Session History Activity Table */}
-      <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/70 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-emerald-400" />
-            <h4 className="text-sm font-bold font-mono text-zinc-200 uppercase tracking-wider">
+      <div className="dashboard-section">
+        <div className="dashboard-section-head">
+          <div className="dashboard-section-heading">
+            <History className="w-4 h-4" />
+            <h4 className="dashboard-section-title">
               Recent Session History
             </h4>
           </div>
-          <span className="text-xs font-mono text-zinc-500">
+          <span className="dashboard-section-copy">
             {sessions.length} sessions logged
           </span>
         </div>
 
         {sessions.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
+          <div className="dashboard-history">
+            <table>
               <thead>
-                <tr className="border-b border-zinc-800 text-zinc-500 uppercase tracking-wider text-[10px]">
+                <tr>
                   <th className="py-2.5 px-3">Passage</th>
                   <th className="py-2.5 px-3">Mode</th>
                   <th className="py-2.5 px-3">Speed</th>
@@ -847,42 +831,36 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
                   <th className="py-2.5 px-3 text-right">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/50">
+              <tbody>
                 {sessions.slice(0, 15).map((s, idx) => (
-                  <tr key={s.id || idx} className="hover:bg-zinc-800/30 transition-colors">
-                    <td className="py-3 px-3 font-medium text-zinc-200 max-w-[200px] truncate">
+                  <tr key={s.id || idx}>
+                    <td className="history-title">
                       {s.passageTitle || 'Zen Passage'}
                     </td>
                     <td className="py-3 px-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
-                          s.mode === 'drill'
-                            ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
-                            : 'bg-zinc-800 text-zinc-400'
-                        }`}
-                      >
+                      <span className="history-muted">
                         {s.mode || 'passage'}
                       </span>
                     </td>
-                    <td className="py-3 px-3 font-bold text-emerald-400">
-                      {s.wpm} <span className="text-zinc-500 font-normal">wpm</span>
+                    <td className="history-accent">
+                      {s.wpm} <span className="history-muted">wpm</span>
                     </td>
-                    <td className="py-3 px-3 text-zinc-300">
-                      <span className={s.accuracy >= 98 ? 'text-cyan-300 font-semibold' : ''}>
+                    <td className="history-muted">
+                      <span className={s.accuracy >= 98 ? 'history-accent' : ''}>
                         {s.accuracy}%
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-zinc-400">
+                    <td className="history-muted">
                       {formatTime(s.elapsedTimeMs)}
                     </td>
-                    <td className="py-3 px-3 text-zinc-400">
+                    <td className={s.errorCount === 0 ? 'history-clean' : 'history-error'}>
                       {s.errorCount === 0 ? (
-                        <span className="text-emerald-400">0</span>
+                        <span>0</span>
                       ) : (
-                        <span className="text-rose-400">{s.errorCount}</span>
+                        <span>{s.errorCount}</span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-right text-zinc-500">
+                    <td className="history-muted">
                       {formatDate(s.createdAt)}
                     </td>
                   </tr>

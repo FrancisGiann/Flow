@@ -229,7 +229,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
   const currentIndex = typed.length;
 
   return (
-    <div className="w-full max-w-4xl mx-auto my-6">
+    <div className="typing-shell">
       {/* Hidden input to capture keystrokes */}
       <input
         ref={inputRef}
@@ -246,92 +246,97 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
       />
 
       {/* Live Minimal HUD */}
-      <div className="flex items-center justify-between px-2 mb-6 text-sm">
-        <div className="flex items-center gap-6">
+      <div className="typing-hud">
+        <div className="hud-metrics">
           {/* WPM Display */}
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-mono font-bold text-zinc-100 tracking-tight">
+          <div className="hud-metric">
+            <span className="hud-value is-primary">
               {liveWpm}
             </span>
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">
+            <span className="hud-label">
               WPM
             </span>
           </div>
 
           {/* Accuracy Display */}
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-mono font-medium text-zinc-300">
+          <div className="hud-metric">
+            <span className="hud-value">
               {accuracy}%
             </span>
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">
+            <span className="hud-label">
               ACC
             </span>
           </div>
 
           {/* Time Display */}
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-mono font-medium text-zinc-300">
+          <div className="hud-metric">
+            <span className="hud-value">
               {Math.floor(elapsedSeconds)}s
             </span>
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">
+            <span className="hud-label">
               TIME
             </span>
           </div>
         </div>
 
         {/* Live Progress Bar */}
-        <div className="flex items-center gap-3">
-          <div className="w-32 h-1.5 bg-zinc-800/80 rounded-full overflow-hidden">
+        <div className="progress-wrap">
+          <div className="progress-track">
             <div
-              className="h-full bg-emerald-400/80 transition-all duration-150 rounded-full"
+              className="progress-fill"
               style={{
                 width: `${targetText.length > 0 ? (typed.length / targetText.length) * 100 : 0}%`
               }}
             />
           </div>
-          <span className="text-xs font-mono text-zinc-500">
+          <span className="progress-count">
             {typed.length}/{targetText.length}
           </span>
         </div>
       </div>
 
-      <div 
-        className="relative select-none focus:outline-none"
+      <div
+        className="typing-focus select-none focus:outline-none"
         onClick={() => inputRef.current?.focus()}
         tabIndex={-1}
       >
         {/* Unfocused Overlay Notice */}
         {!isFocused && (
-          <div className="absolute inset-0 z-20 backdrop-blur-[2px] bg-black/40 flex items-center justify-center rounded-2xl cursor-pointer">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-700/80 text-zinc-300 text-sm font-medium shadow-xl">
-              <AlertCircle className="w-4 h-4 text-emerald-400 animate-pulse" />
+          <div className="focus-overlay">
+            <div className="focus-callout">
+              <AlertCircle className="w-4 h-4" />
               Click or press any key to focus
             </div>
           </div>
         )}
 
         {/* Typing Canvas */}
-        <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 shadow-2xl backdrop-blur-md min-h-[180px] flex flex-wrap content-start leading-relaxed text-2xl font-mono tracking-wide">
-          {words.map(({ chars, space, wordIndex }) => (
-            <div key={wordIndex} className="inline-flex items-center whitespace-nowrap mr-3 my-1">
+        <div className="typing-surface">
+          <div className="typing-copy">
+          {words.map(({ chars, space, wordIndex }) => {
+            const wordStart = chars[0]?.index ?? space?.index;
+            const wordEnd = space?.index ?? chars[chars.length - 1]?.index;
+            const isActiveWord = currentIndex >= wordStart && currentIndex <= wordEnd;
+            return (
+            <span key={wordIndex} className={`typing-word ${isActiveWord ? 'is-active' : ''}`}>
               {chars.map(({ char, index }) => {
                 const isTyped = index < currentIndex;
                 const isCurrent = index === currentIndex;
                 const isCorrect = isTyped && typed[index] === char;
                 const isIncorrect = isTyped && typed[index] !== char;
 
-                let charClass = 'text-zinc-600 transition-colors duration-75';
+                let charClass = 'char-pending';
                 if (isCorrect) {
-                  charClass = 'text-zinc-100 font-medium';
+                  charClass = 'char-correct';
                 } else if (isIncorrect) {
-                  charClass = 'text-rose-400 bg-rose-500/10 rounded-xs border-b border-rose-500/60';
+                  charClass = 'char-error';
                 }
 
                 return (
                   <span key={index} className="relative inline-block">
                     {/* Caret before current char */}
                     {isCurrent && isFocused && (
-                      <span className="absolute -left-[1.5px] top-[10%] bottom-[10%] w-[2.5px] bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] z-10 pointer-events-none" />
+                      <span className="typing-caret animate-caret" />
                     )}
                     <span className={charClass}>{char}</span>
                   </span>
@@ -342,28 +347,31 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
               {space && (
                 <span key={space.index} className="relative inline-block">
                   {space.index === currentIndex && isFocused && (
-                    <span className="absolute -left-[1.5px] top-[10%] bottom-[10%] w-[2.5px] bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] z-10 pointer-events-none" />
+                    <span className="typing-caret animate-caret" />
                   )}
                   {space.index < currentIndex ? (
                     typed[space.index] === ' ' ? (
-                      <span className="text-zinc-600">&nbsp;</span>
+                      <span className="char-space">&nbsp;</span>
                     ) : (
-                      <span className="text-rose-400 bg-rose-500/20 underline decoration-rose-500 rounded-xs">
+                      <span className="char-space is-error">
                         _
                       </span>
                     )
                   ) : (
-                    <span className="text-zinc-700">&nbsp;</span>
+                    <span className="char-space">&nbsp;</span>
                   )}
                 </span>
               )}
-            </div>
-          ))}
+              <span className="word-breathline" aria-hidden="true" />
+            </span>
+            );
+          })}
 
           {/* Caret at very end of text if reached */}
           {currentIndex === targetText.length && isFocused && (
-            <span className="inline-block w-[2.5px] h-7 bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] my-1 align-middle" />
+            <span className="typing-caret is-end animate-caret" />
           )}
+          </div>
         </div>
       </div>
 
@@ -374,18 +382,18 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
         userStartTime={startTime}
         isUserCompleted={Boolean(endTime || (targetText.length > 0 && typed.length === targetText.length))}
         userWpm={liveWpm}
-        className="mt-4 px-1"
+        className=""
       />
 
       {/* Subtle bottom control hint */}
-      <div className="flex items-center justify-between mt-3 px-2 text-xs text-zinc-500 font-mono">
-        <div className="flex items-center gap-4">
-          <span><kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-400">Tab</kbd> restart</span>
-          <span><kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-400">Ctrl+Backspace</kbd> delete word</span>
+      <div className="typing-footer">
+        <div className="typing-shortcuts">
+          <span><kbd className="kbd">Tab</kbd> restart</span>
+          <span><kbd className="kbd">Ctrl+Backspace</kbd> delete word</span>
         </div>
         <button
           onClick={resetSession}
-          className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="reset-button"
         >
           <RotateCcw className="w-3 h-3" />
           <span>reset</span>

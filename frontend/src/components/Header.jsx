@@ -1,5 +1,5 @@
-import React from 'react';
-import { RotateCcw, SkipForward, Keyboard, Activity } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { RotateCcw, SkipForward, Keyboard, Activity, Moon, Sun } from 'lucide-react';
 
 export default function Header({
   currentView = 'type',
@@ -9,9 +9,42 @@ export default function Header({
   difficulty,
   setDifficulty,
   onReset,
-  onNext,
-  isTyping
+  onNext
 }) {
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'dark';
+    try {
+      const saved = window.localStorage.getItem('flow_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {}
+    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  });
+  const [hasExplicitTheme, setHasExplicitTheme] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const saved = window.localStorage.getItem('flow_theme');
+      return saved === 'light' || saved === 'dark';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    if (hasExplicitTheme) {
+      try {
+        window.localStorage.setItem('flow_theme', theme);
+      } catch {}
+    }
+  }, [theme, hasExplicitTheme]);
+
+  const toggleTheme = () => {
+    setHasExplicitTheme(true);
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
+  };
+
   const categories = [
     { id: 'all', label: 'All' },
     { id: 'zen', label: 'Zen' },
@@ -28,33 +61,35 @@ export default function Header({
   ];
 
   return (
-    <header className="w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 py-6 border-b border-zinc-800/60 transition-opacity duration-300">
+    <header className="app-header flex flex-col md:flex-row items-center justify-between gap-4">
       {/* Brand Logo & View Switcher */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => setCurrentView && setCurrentView('type')}
-          className="flex items-center gap-3 cursor-pointer group text-left"
+          className="brand-button flex items-center gap-3 cursor-pointer group text-left border-0 bg-transparent"
         >
-          <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shadow-inner group-hover:border-emerald-500/40 transition-colors">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          </div>
+          <img 
+            src="/logo.jpg" 
+            alt="Flow Logo" 
+            className="w-8 h-8 rounded-lg shadow-sm border border-zinc-800/50 group-hover:border-emerald-500/50 transition-colors"
+          />
           <div>
-            <h1 className="text-xl font-bold tracking-widest text-zinc-100 uppercase font-mono group-hover:text-emerald-300 transition-colors">
+            <h1 className="brand-name uppercase font-mono group-hover:text-[var(--accent)] transition-colors">
               FLOW
             </h1>
-            <p className="text-[10px] text-zinc-500 tracking-wider font-mono">ZEN SPEED TYPING</p>
+            <p className="brand-tagline">ZEN SPEED TYPING</p>
           </div>
         </button>
 
         {/* Primary View Switcher Navigation */}
         {setCurrentView && (
-          <div className="flex items-center bg-zinc-900/90 p-1 rounded-lg border border-zinc-800 text-xs font-mono ml-2">
+          <div className="nav-switcher font-mono ml-2">
             <button
               onClick={() => setCurrentView('type')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              className={`nav-link ${
                 currentView === 'type'
-                  ? 'bg-zinc-800 text-emerald-400 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'is-active'
+                  : ''
               }`}
             >
               <Keyboard className="w-3.5 h-3.5" />
@@ -62,10 +97,10 @@ export default function Header({
             </button>
             <button
               onClick={() => setCurrentView('dashboard')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              className={`nav-link ${
                 currentView === 'dashboard'
-                  ? 'bg-zinc-800 text-emerald-400 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'is-active'
+                  : ''
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -77,21 +112,17 @@ export default function Header({
 
       {/* Mode Filters (Visible in Type mode) */}
       {currentView === 'type' ? (
-        <div
-          className={`flex flex-wrap items-center gap-2 transition-opacity duration-300 ${
-            isTyping ? 'opacity-30 hover:opacity-100' : 'opacity-100'
-          }`}
-        >
+        <div className="header-actions flex flex-wrap items-center gap-2">
           {/* Category Pills */}
-          <div className="flex items-center bg-zinc-900/80 p-1 rounded-lg border border-zinc-800/80 text-xs">
+          <div className="filter-group">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setCategory(cat.id)}
-                className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                className={`filter-button ${
                   category === cat.id
-                    ? 'bg-zinc-800 text-emerald-400 shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'is-active'
+                    : ''
                 }`}
               >
                 {cat.label}
@@ -100,15 +131,15 @@ export default function Header({
           </div>
 
           {/* Difficulty Pills */}
-          <div className="flex items-center bg-zinc-900/80 p-1 rounded-lg border border-zinc-800/80 text-xs">
+          <div className="filter-group">
             {difficulties.map((diff) => (
               <button
                 key={diff.id}
                 onClick={() => setDifficulty(diff.id)}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                className={`filter-button ${
                   difficulty === diff.id
-                    ? 'bg-zinc-800 text-zinc-100 shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'is-active'
+                    : ''
                 }`}
               >
                 {diff.label}
@@ -121,24 +152,36 @@ export default function Header({
             <button
               onClick={onReset}
               title="Restart current passage (Tab)"
-              className="p-2 rounded-lg bg-zinc-900/80 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors cursor-pointer"
+              aria-label="Restart current passage"
+              className="icon-button"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-4 h-4" />
             </button>
             <button
               onClick={onNext}
               title="Next passage"
-              className="p-2 rounded-lg bg-zinc-900/80 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors cursor-pointer"
+              aria-label="Next passage"
+              className="icon-button"
             >
-              <SkipForward className="w-3.5 h-3.5" />
+              <SkipForward className="w-4 h-4" />
             </button>
           </div>
         </div>
       ) : (
-        <div className="text-xs font-mono text-zinc-500">
-          Neural Progress & Telemetry Center
+        <div className="header-actions">
+          <span className="brand-tagline">Progress &amp; telemetry</span>
         </div>
       )}
+
+      <button
+        type="button"
+        className="theme-toggle"
+        onClick={toggleTheme}
+        aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+      >
+        {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      </button>
     </header>
   );
 }

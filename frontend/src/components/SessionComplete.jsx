@@ -43,100 +43,88 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
 
   const feedback = getFeedback();
 
-  const getWeaknessBadgeColor = (type) => {
-    switch (type) {
-      case 'trigram':
-        return 'bg-purple-500/10 text-purple-300 border-purple-500/30';
-      case 'bigram':
-        return 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30';
-      case 'char':
-      default:
-        return 'bg-amber-500/10 text-amber-300 border-amber-500/30';
-    }
-  };
-
   return (
-    <div className="w-full max-w-3xl mx-auto my-8 animate-in fade-in zoom-in-95 duration-300">
+    <div className="completion-shell">
       {/* Main Result Card */}
-      <div className="p-8 md:p-10 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 shadow-2xl backdrop-blur-md">
+      <div className="completion-card">
         {/* Header feedback */}
-        <div className="flex items-center justify-between border-b border-zinc-800/70 pb-6 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Sparkles className="w-5 h-5" />
+        <div className="completion-header">
+          <div className="feedback-lockup">
+            <div className="feedback-icon">
+              <Sparkles className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-zinc-100 font-sans tracking-wide">
+              <h2 className="feedback-title">
                 {feedback.title}
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">{feedback.desc}</p>
+              <p className="feedback-description">{feedback.desc}</p>
             </div>
           </div>
 
-          <div className="hidden sm:block text-right">
-            <span className="text-xs text-zinc-500 uppercase tracking-widest font-mono">
+          <div className="completion-passage">
+            <span className="completion-passage-label">
               Passage
             </span>
-            <p className="text-sm font-medium text-zinc-300 truncate max-w-[200px]">
+            <p className="completion-passage-title">
               {passage?.title || 'Practice Text'}
             </p>
           </div>
         </div>
 
         {/* Hero Metrics Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="result-metrics">
           {/* Net WPM */}
-          <div className="p-5 rounded-xl bg-zinc-800/40 border border-zinc-700/40 flex flex-col">
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-              <span className="font-mono uppercase tracking-wider">Net WPM</span>
-              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="result-metric">
+            <div className="result-label">
+              <span>Net WPM</span>
+              <Zap className="w-4 h-4" />
             </div>
-            <div className="text-4xl font-extrabold font-mono text-zinc-100 tracking-tight">
+            <div className="result-value">
               {wpm}
             </div>
-            <span className="text-[11px] text-zinc-500 mt-1 font-mono">
+            <span className="result-support">
               Raw: {rawWpm} wpm
             </span>
           </div>
 
           {/* Accuracy */}
-          <div className="p-5 rounded-xl bg-zinc-800/40 border border-zinc-700/40 flex flex-col">
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-              <span className="font-mono uppercase tracking-wider">Accuracy</span>
-              <Target className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="result-metric">
+            <div className="result-label">
+              <span>Accuracy</span>
+              <Target className="w-4 h-4" />
             </div>
-            <div className="text-4xl font-extrabold font-mono text-zinc-100 tracking-tight">
+            <div className="result-value">
               {accuracy}%
             </div>
-            <span className="text-[11px] text-zinc-500 mt-1 font-mono">
+            <span className="result-support">
               {errorCount === 0 ? 'Flawless run' : `${errorCount} mistake${errorCount > 1 ? 's' : ''}`}
             </span>
           </div>
 
           {/* Time */}
-          <div className="p-5 rounded-xl bg-zinc-800/40 border border-zinc-700/40 flex flex-col">
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-              <span className="font-mono uppercase tracking-wider">Time</span>
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <div className="result-metric">
+            <div className="result-label">
+              <span>Time</span>
+              <Clock className="w-4 h-4" />
             </div>
-            <div className="text-4xl font-extrabold font-mono text-zinc-100 tracking-tight">
+            <div className="result-value">
               {seconds}s
             </div>
-            <span className="text-[11px] text-zinc-500 mt-1 font-mono">
+            <span className="result-support">
               {Math.round((totalChars / Math.max(elapsedTimeMs / 1000, 1)) * 60)} cpm
             </span>
           </div>
 
           {/* Characters */}
-          <div className="p-5 rounded-xl bg-zinc-800/40 border border-zinc-700/40 flex flex-col">
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-              <span className="font-mono uppercase tracking-wider">Characters</span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="result-metric">
+            <div className="result-label">
+              <span>Characters</span>
+              <CheckCircle2 className="w-4 h-4" />
             </div>
-            <div className="text-4xl font-extrabold font-mono text-zinc-100 tracking-tight">
+            <div className="result-value">
               {correctChars}
             </div>
-            <span className="text-[11px] text-zinc-500 mt-1 font-mono">
+            <span className="result-support">
               {totalChars} total chars
             </span>
           </div>
@@ -144,62 +132,60 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
 
         {/* Weakness Profile / Focus Spots Card */}
         {hasWeaknesses && (
-          <div className="mb-8 p-5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 shadow-inner">
-            <div className="flex items-center justify-between mb-3">
+          <div className="weakness-panel">
+            <div className="weakness-heading">
               <div className="flex items-center gap-2">
-                <Brain className="w-4 h-4 text-purple-400" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                <Brain className="w-4 h-4" />
+                <span>
                   Identified Focus Areas ({weaknesses.length})
                 </span>
               </div>
-              <span className="text-[11px] text-zinc-500 font-mono">
+              <span>
                 AI Drill Ready
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-2.5">
+            <div className="weakness-chips">
               {weaknesses.map((w, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono ${getWeaknessBadgeColor(
-                    w.type
-                  )}`}
+                  className="weakness-chip"
                 >
-                  <span className="font-bold text-sm bg-black/30 px-1.5 py-0.5 rounded">
+                  <span className="weakness-chip-token">
                     {w.token === ' ' ? '␣' : w.token}
                   </span>
-                  <span className="text-[10px] uppercase opacity-75">
+                  <span className="weakness-chip-type">
                     {w.type}
                   </span>
                   {w.errors > 0 ? (
-                    <span className="text-rose-400 text-[11px] font-semibold">
+                    <span className="weakness-chip-error">
                       {w.errors} err
                     </span>
                   ) : w.avgLatencyMs ? (
-                    <span className="text-zinc-400 text-[11px]">
+                    <span className="weakness-chip-type">
                       {w.avgLatencyMs}ms
                     </span>
                   ) : null}
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-zinc-500 mt-2.5">
+            <p className="weakness-note">
               Clicking Next will generate a custom AI drill passage over-representing these patterns.
             </p>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        <div className="completion-actions">
           {hasWeaknesses ? (
             <button
               onClick={onNext}
               autoFocus
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-medium text-sm flex items-center justify-center gap-2 border border-emerald-500/20 transition-all cursor-pointer shadow-lg shadow-emerald-500/5"
+              className="action-primary"
             >
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <Sparkles className="w-4 h-4" />
               <span>Start AI Drill</span>
-              <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono ml-1">
+              <kbd className="kbd hidden sm:inline-block">
                 Enter
               </kbd>
             </button>
@@ -207,11 +193,11 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
             <button
               onClick={onNext}
               autoFocus
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 font-medium text-sm flex items-center justify-center gap-2 shadow-sm border border-white/5 transition-all cursor-pointer"
+              className="action-primary"
             >
               <span>Next Passage</span>
               <ArrowRight className="w-4 h-4 text-zinc-400" />
-              <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-zinc-700/50 text-zinc-400 font-mono ml-1">
+              <kbd className="kbd hidden sm:inline-block">
                 Enter
               </kbd>
             </button>
@@ -220,7 +206,7 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
           {hasWeaknesses && onNextStandard && (
             <button
               onClick={onNextStandard}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-sm flex items-center justify-center gap-2 border border-zinc-700/60 transition-colors cursor-pointer"
+            className="action-secondary"
             >
               <ArrowRight className="w-4 h-4" />
               <span>Standard Passage</span>
@@ -229,11 +215,11 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
 
           <button
             onClick={onRestart}
-            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-sm flex items-center justify-center gap-2 border border-zinc-700/60 transition-colors cursor-pointer"
+            className="action-secondary"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Retry Passage</span>
-            <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-300 font-mono ml-1">
+            <kbd className="kbd hidden sm:inline-block">
               Tab
             </kbd>
           </button>
@@ -241,10 +227,10 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
           {onViewDashboard && (
             <button
               onClick={onViewDashboard}
-              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 font-medium text-sm flex items-center justify-center gap-2 border border-zinc-800 transition-colors cursor-pointer"
+              className="action-tertiary"
               title="Open Progress & Telemetry Dashboard"
             >
-              <Activity className="w-4 h-4 text-emerald-400" />
+              <Activity className="w-4 h-4" />
               <span>Dashboard</span>
             </button>
           )}

@@ -1,4 +1,19 @@
-# React + Vite
+# Flow — quiet precision typing practice
+
+![Flow feature showcase](docs/screenshots/flow-feature-showcase.png)
+
+Flow is a focused typing practice workspace for daily repetition. The showcase
+above demonstrates the two tuned themes and the progress dashboard.
+
+Features:
+
+- distraction-free passage typing with WPM, accuracy, time, caret, and active-word breathline feedback;
+- optional Ghost Racer pacing instrument with adjustable opponent speed;
+- completion analysis with weakness detection and targeted AI drills;
+- progression dashboard with coach narration, KPIs, speed chart, weakness drills, and session history;
+- persisted light/dark theme toggle with system preference fallback and keyboard-accessible controls.
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 

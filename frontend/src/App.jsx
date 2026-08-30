@@ -219,7 +219,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen zen-bg text-[#c9cdd4] flex flex-col justify-between px-4 sm:px-8 py-6 selection:bg-zinc-800 selection:text-emerald-300">
+    <div className="app-shell flex flex-col justify-between">
       {/* Top Header */}
       <Header
         currentView={currentView}
@@ -234,15 +234,14 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center my-auto py-8 w-full max-w-4xl mx-auto">
+      <main className="app-main flex-1 flex flex-col items-center">
         {currentView === 'dashboard' ? (
           <Dashboard
             onStartTyping={() => setCurrentView('type')}
             onStartDrill={handleStartDrill}
           />
         ) : loading ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 text-zinc-500 font-mono text-sm animate-pulse">
-            <div className="w-6 h-6 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+          <div className="loading-state">
             <span>Finding your rhythm...</span>
           </div>
         ) : sessionStats ? (
@@ -254,7 +253,7 @@ export default function App() {
             onViewDashboard={() => setCurrentView('dashboard')}
           />
         ) : passage ? (
-          <div className="w-full flex flex-col">
+          <div className="typing-view">
             <PassageInfo passage={passage} isTyping={false} />
             <TypingArea
               key={`${passage.id || passage.title}-${sessionCount}`}
@@ -271,4 +270,3 @@ export default function App() {
     </div>
   );
 }
-

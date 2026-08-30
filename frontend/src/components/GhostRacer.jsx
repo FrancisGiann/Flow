@@ -279,9 +279,11 @@ export default function GhostRacer({
 
   if (!isEnabled) {
     return (
-      <div className={`w-full flex items-center justify-between py-1 text-[11px] text-zinc-600 font-mono ${className}`}>
+      <div className={`ghost-racer ghost-off ${className}`}>
         <button
           onClick={toggleEnabled}
+          type="button"
+          aria-label="Enable Ghost Racer opponent"
           className="flex items-center gap-1.5 hover:text-zinc-400 transition-colors cursor-pointer"
           title="Enable subtle Ghost Racer opponent"
         >
@@ -295,27 +297,30 @@ export default function GhostRacer({
   const speedPreset = SPEED_PRESETS.find((p) => p.wpm === targetWpm) || { label: 'Custom', wpm: targetWpm };
 
   return (
-    <div className={`w-full flex flex-col gap-1.5 select-none py-1 transition-opacity duration-200 ${className}`}>
+    <div className={`ghost-racer select-none ${className}`}>
       {/* Ghost Racer Header Status & Setting Pill */}
-      <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500">
-        <div className="flex items-center gap-2">
+      <div className="ghost-header">
+        <div className="ghost-controls">
           {/* Speed Preset Pill */}
           <button
             onClick={cycleSpeed}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer shadow-xs"
+            className="ghost-control"
+            type="button"
+            aria-label={`Change Ghost Racer pace, currently ${targetWpm} WPM`}
             title="Click to cycle Ghost difficulty"
           >
-            <Bot className="w-3 h-3 text-cyan-400/80" />
-            <span className="text-zinc-300 font-medium">Ghost</span>
-            <span className="text-zinc-500">·</span>
-            <span className="text-cyan-400 font-semibold">{targetWpm} WPM</span>
-            <span className="text-[10px] text-zinc-500">({speedPreset.label})</span>
+            <Bot className="w-3.5 h-3.5" />
+            <span>Ghost</span>
+            <span aria-hidden="true">·</span>
+            <strong>{targetWpm} WPM</strong>
+            <span>({speedPreset.label})</span>
           </button>
 
           {/* Quick toggle button */}
           <button
             onClick={toggleEnabled}
-            className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors underline decoration-zinc-800"
+            className="ghost-hide"
+            type="button"
             title="Disable Ghost Racer"
           >
             hide
@@ -324,29 +329,29 @@ export default function GhostRacer({
 
         {/* Live Race Delta Status */}
         {raceStatus && (
-          <div className="flex items-center gap-1.5">
+          <div className="ghost-status">
             {raceStatus.type === 'win' && (
-              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[10px]">
+              <span className="ghost-status is-win">
                 {raceStatus.text}
               </span>
             )}
             {raceStatus.type === 'lead' && (
-              <span className="text-emerald-400/90 font-medium text-[11px]">
+              <span className="ghost-status is-win">
                 {raceStatus.text}
               </span>
             )}
             {raceStatus.type === 'loss' && (
-              <span className="px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-400 text-[10px]">
+              <span className="ghost-status is-loss">
                 {raceStatus.text}
               </span>
             )}
             {raceStatus.type === 'behind' && (
-              <span className="text-zinc-500 text-[11px]">
+              <span className="ghost-status">
                 {raceStatus.text}
               </span>
             )}
             {raceStatus.type === 'neutral' && (
-              <span className="text-zinc-500 text-[10px]">
+              <span className="ghost-status">
                 {raceStatus.text}
               </span>
             )}
@@ -355,16 +360,16 @@ export default function GhostRacer({
       </div>
 
       {/* Subtle Zen Dual-Progress Track */}
-      <div className="relative w-full h-1.5 bg-zinc-900/90 rounded-full border border-zinc-800/60 overflow-visible">
+      <div className="ghost-track" aria-label={`Ghost race progress: you ${userPercent} percent, ghost ${ghostPercent} percent`} role="img">
         {/* User Progress Fill (Subtle Emerald) */}
         <div
-          className="absolute top-0 left-0 h-full bg-emerald-500/70 rounded-full transition-all duration-100 ease-out"
+          className="ghost-user-progress"
           style={{ width: `${userPercent}%` }}
         />
 
         {/* Ghost Marker Pip (Subtle Cyan Pip with soft glow) */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-cyan-400/80 shadow-[0_0_6px_rgba(34,211,238,0.6)] border border-cyan-200/40 pointer-events-none transition-all duration-150 ease-out"
+          className="ghost-marker"
           style={{ left: `${ghostPercent}%` }}
           title={`Ghost: ${ghostPercent}%`}
         />
