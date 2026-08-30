@@ -311,7 +311,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
         )}
 
         {/* Typing Canvas */}
-        <div className="p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/70 shadow-2xl backdrop-blur-sm min-h-[180px] flex flex-wrap content-start leading-relaxed text-2xl font-mono tracking-wide">
+        <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 shadow-2xl backdrop-blur-md min-h-[180px] flex flex-wrap content-start leading-relaxed text-2xl font-mono tracking-wide">
           {words.map(({ chars, space, wordIndex }) => (
             <div key={wordIndex} className="inline-flex items-center whitespace-nowrap mr-3 my-1">
               {chars.map(({ char, index }) => {

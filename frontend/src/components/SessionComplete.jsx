@@ -195,11 +195,11 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
             <button
               onClick={onNext}
               autoFocus
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-medium text-sm flex items-center justify-center gap-2 border border-emerald-500/20 transition-all cursor-pointer shadow-lg shadow-emerald-500/5"
             >
-              <Sparkles className="w-4 h-4 text-zinc-950" />
+              <Sparkles className="w-4 h-4 text-emerald-400" />
               <span>Start AI Drill</span>
-              <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-600/40 text-emerald-950 font-mono ml-1">
+              <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono ml-1">
                 Enter
               </kbd>
             </button>
@@ -207,11 +207,11 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
             <button
               onClick={onNext}
               autoFocus
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 font-medium text-sm flex items-center justify-center gap-2 shadow-sm border border-white/5 transition-all cursor-pointer"
             >
               <span>Next Passage</span>
-              <ArrowRight className="w-4 h-4" />
-              <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-600/40 text-emerald-950 font-mono ml-1">
+              <ArrowRight className="w-4 h-4 text-zinc-400" />
+              <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-zinc-700/50 text-zinc-400 font-mono ml-1">
                 Enter
               </kbd>
             </button>

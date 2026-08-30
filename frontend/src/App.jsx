@@ -219,7 +219,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0d10] text-[#c9cdd4] flex flex-col justify-between px-4 sm:px-8 py-6 selection:bg-zinc-800 selection:text-emerald-300">
+    <div className="min-h-screen zen-bg text-[#c9cdd4] flex flex-col justify-between px-4 sm:px-8 py-6 selection:bg-zinc-800 selection:text-emerald-300">
       {/* Top Header */}
       <Header
         currentView={currentView}
