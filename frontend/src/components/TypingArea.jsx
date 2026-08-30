@@ -229,11 +229,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
   const currentIndex = typed.length;
 
   return (
-    <div
-      className="relative w-full max-w-4xl mx-auto my-6 select-none focus:outline-none"
-      onClick={() => inputRef.current?.focus()}
-      tabIndex={-1}
-    >
+    <div className="w-full max-w-4xl mx-auto my-6">
       {/* Hidden input to capture keystrokes */}
       <input
         ref={inputRef}
@@ -299,70 +295,76 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
         </div>
       </div>
 
-      {/* Unfocused Overlay Notice */}
-      {!isFocused && (
-        <div className="absolute inset-0 z-20 backdrop-blur-[2px] bg-black/40 flex items-center justify-center rounded-2xl cursor-pointer">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-700/80 text-zinc-300 text-sm font-medium shadow-xl">
-            <AlertCircle className="w-4 h-4 text-emerald-400 animate-pulse" />
-            Click or press any key to focus
+      <div 
+        className="relative select-none focus:outline-none"
+        onClick={() => inputRef.current?.focus()}
+        tabIndex={-1}
+      >
+        {/* Unfocused Overlay Notice */}
+        {!isFocused && (
+          <div className="absolute inset-0 z-20 backdrop-blur-[2px] bg-black/40 flex items-center justify-center rounded-2xl cursor-pointer">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-700/80 text-zinc-300 text-sm font-medium shadow-xl">
+              <AlertCircle className="w-4 h-4 text-emerald-400 animate-pulse" />
+              Click or press any key to focus
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Typing Canvas */}
-      <div className="p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/70 shadow-2xl backdrop-blur-sm min-h-[180px] flex flex-wrap content-start leading-relaxed text-2xl font-mono tracking-wide">
-        {words.map(({ chars, space, wordIndex }) => (
-          <div key={wordIndex} className="inline-flex items-center whitespace-nowrap mr-3 my-1">
-            {chars.map(({ char, index }) => {
-              const isTyped = index < currentIndex;
-              const isCurrent = index === currentIndex;
-              const isCorrect = isTyped && typed[index] === char;
-              const isIncorrect = isTyped && typed[index] !== char;
+        {/* Typing Canvas */}
+        <div className="p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/70 shadow-2xl backdrop-blur-sm min-h-[180px] flex flex-wrap content-start leading-relaxed text-2xl font-mono tracking-wide">
+          {words.map(({ chars, space, wordIndex }) => (
+            <div key={wordIndex} className="inline-flex items-center whitespace-nowrap mr-3 my-1">
+              {chars.map(({ char, index }) => {
+                const isTyped = index < currentIndex;
+                const isCurrent = index === currentIndex;
+                const isCorrect = isTyped && typed[index] === char;
+                const isIncorrect = isTyped && typed[index] !== char;
 
-              let charClass = 'text-zinc-600 transition-colors duration-75';
-              if (isCorrect) {
-                charClass = 'text-zinc-100 font-medium';
-              } else if (isIncorrect) {
-                charClass = 'text-rose-400 bg-rose-500/10 rounded-xs border-b border-rose-500/60';
-              }
+                let charClass = 'text-zinc-600 transition-colors duration-75';
+                if (isCorrect) {
+                  charClass = 'text-zinc-100 font-medium';
+                } else if (isIncorrect) {
+                  charClass = 'text-rose-400 bg-rose-500/10 rounded-xs border-b border-rose-500/60';
+                }
 
-              return (
-                <span key={index} className="relative inline-block">
-                  {/* Caret before current char */}
-                  {isCurrent && isFocused && (
+                return (
+                  <span key={index} className="relative inline-block">
+                    {/* Caret before current char */}
+                    {isCurrent && isFocused && (
+                      <span className="absolute -left-[1.5px] top-[10%] bottom-[10%] w-[2.5px] bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] z-10 pointer-events-none" />
+                    )}
+                    <span className={charClass}>{char}</span>
+                  </span>
+                );
+              })}
+
+              {/* Space character after word */}
+              {space && (
+                <span key={space.index} className="relative inline-block">
+                  {space.index === currentIndex && isFocused && (
                     <span className="absolute -left-[1.5px] top-[10%] bottom-[10%] w-[2.5px] bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] z-10 pointer-events-none" />
                   )}
-                  <span className={charClass}>{char}</span>
-                </span>
-              );
-            })}
-
-            {/* Space character after word */}
-            {space && (
-              <span key={space.index} className="relative inline-block">
-                {space.index === currentIndex && isFocused && (
-                  <span className="absolute -left-[1.5px] top-[10%] bottom-[10%] w-[2.5px] bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] z-10 pointer-events-none" />
-                )}
-                {space.index < currentIndex ? (
-                  typed[space.index] === ' ' ? (
-                    <span className="text-zinc-600">&nbsp;</span>
+                  {space.index < currentIndex ? (
+                    typed[space.index] === ' ' ? (
+                      <span className="text-zinc-600">&nbsp;</span>
+                    ) : (
+                      <span className="text-rose-400 bg-rose-500/20 underline decoration-rose-500 rounded-xs">
+                        _
+                      </span>
+                    )
                   ) : (
-                    <span className="text-rose-400 bg-rose-500/20 underline decoration-rose-500 rounded-xs">
-                      _
-                    </span>
-                  )
-                ) : (
-                  <span className="text-zinc-700">&nbsp;</span>
-                )}
-              </span>
-            )}
-          </div>
-        ))}
+                    <span className="text-zinc-700">&nbsp;</span>
+                  )}
+                </span>
+              )}
+            </div>
+          ))}
 
-        {/* Caret at very end of text if reached */}
-        {currentIndex === targetText.length && isFocused && (
-          <span className="inline-block w-[2.5px] h-7 bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] my-1 align-middle" />
-        )}
+          {/* Caret at very end of text if reached */}
+          {currentIndex === targetText.length && isFocused && (
+            <span className="inline-block w-[2.5px] h-7 bg-emerald-400 rounded-full animate-caret shadow-[0_0_8px_rgba(52,211,153,0.8)] my-1 align-middle" />
+          )}
+        </div>
       </div>
 
       {/* Ghost Racer Subtle Progress Line */}
