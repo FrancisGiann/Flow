@@ -16,6 +16,7 @@ export default function GhostRacer({
   isUserCompleted = false,
   _userWpm = 0,
   defaultSkillWpm = 65,
+  isZenMode = false,
   className = ''
 }) {
   // Load persisted user settings
@@ -95,19 +96,19 @@ export default function GhostRacer({
     }
   }, [isUserCompleted, userFinishTime]);
 
+  const userTypedLengthRef = useRef(userTypedLength);
+  
+  useEffect(() => {
+    userTypedLengthRef.current = userTypedLength;
+  }, [userTypedLength]);
+
   // Simulated Opponent Typing Loop
   useEffect(() => {
     if (!isEnabled || !userStartTime || !targetText || targetText.length === 0) {
       return;
     }
 
-    if (ghostIndex >= targetText.length) {
-      if (ghostState !== 'finished') {
-        setGhostState('finished');
-        if (!ghostFinishTime) {
-          setGhostFinishTime(Date.now());
-        }
-      }
+    if (ghostIndexRef.current >= targetText.length) {
       return;
     }
 
@@ -131,7 +132,7 @@ export default function GhostRacer({
       // 1. Reactive Pacing (Rubber-banding):
       // If user is pulling ahead, ghost speeds up to stay competitive.
       // If user is trailing significantly, ghost eases off slightly.
-      const leadDelta = userTypedLength - currentIndex;
+      const leadDelta = userTypedLengthRef.current - currentIndex;
       let reactiveMultiplier = 1.0;
       if (leadDelta > 3) {
         // User is ahead: ghost speeds up by up to 22%
@@ -221,12 +222,12 @@ export default function GhostRacer({
         ghostTimerRef.current = null;
       }
     };
-  }, [isEnabled, userStartTime, targetWpm, targetText, userTypedLength]);
+  }, [isEnabled, userStartTime, targetWpm, targetText]);
 
   // Compute race percentages
   const totalLength = targetText.length || 1;
-  const userPercent = Math.min(100, Math.round((userTypedLength / totalLength) * 100));
-  const ghostPercent = Math.min(100, Math.round((ghostIndex / totalLength) * 100));
+  const userPercent = Math.min(100, (userTypedLength / totalLength) * 100);
+  const ghostPercent = Math.min(100, (ghostIndex / totalLength) * 100);
 
   // Determine current lead/status
   const raceStatus = useMemo(() => {
@@ -278,6 +279,8 @@ export default function GhostRacer({
   ]);
 
   if (!isEnabled) {
+    if (isZenMode) return null;
+
     return (
       <div className={`ghost-racer ghost-off ${className}`}>
         <button
@@ -367,7 +370,7 @@ export default function GhostRacer({
           style={{ width: `${userPercent}%` }}
         />
 
-        {/* Ghost Marker Pip (Subtle Cyan Pip with soft glow) */}
+        {/* Ghost marker pip keeps the opponent pace legible without adding another panel. */}
         <div
           className="ghost-marker"
           style={{ left: `${ghostPercent}%` }}
