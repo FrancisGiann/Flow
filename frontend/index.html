@@ -3,16 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#111715" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
       (() => {
         try {
           const saved = localStorage.getItem('flow_theme');
-          const theme = saved === 'light' || saved === 'dark'
+          const validThemes = ['light', 'dark', 'matcha', 'midnight', 'sakura', 'sand'];
+          const theme = validThemes.includes(saved)
             ? saved
             : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
           document.documentElement.dataset.theme = theme;
-          document.documentElement.style.colorScheme = theme;
+          const isLight = ['light', 'matcha', 'sakura', 'sand'].includes(theme);
+          document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
         } catch {}
       })();
     </script>

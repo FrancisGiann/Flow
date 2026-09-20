@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RotateCcw, SkipForward, Keyboard, Activity, Moon, Sun } from 'lucide-react';
+import { RotateCcw, SkipForward, Keyboard, Activity, Moon, Sun, Settings, Leaf, Stars, Flower2, Waves } from 'lucide-react';
 
 export default function Header({
   currentView = 'type',
@@ -9,7 +9,8 @@ export default function Header({
   difficulty,
   setDifficulty,
   onReset,
-  onNext
+  onNext,
+  onSettings
 }) {
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'dark';
@@ -33,6 +34,7 @@ export default function Header({
     const root = document.documentElement;
     root.dataset.theme = theme;
     root.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f4f1e8' : '#111715');
     if (hasExplicitTheme) {
       try {
         window.localStorage.setItem('flow_theme', theme);
@@ -40,9 +42,14 @@ export default function Header({
     }
   }, [theme, hasExplicitTheme]);
 
+  const themes = ['light', 'dark', 'matcha', 'midnight', 'sakura', 'sand'];
+
   const toggleTheme = () => {
     setHasExplicitTheme(true);
-    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
+    setTheme((current) => {
+      const idx = themes.indexOf(current);
+      return themes[(idx + 1) % themes.length];
+    });
   };
 
   const categories = [
@@ -51,6 +58,7 @@ export default function Header({
     { id: 'quotes', label: 'Quotes' },
     { id: 'code', label: 'Code' },
     { id: 'drill', label: 'Drills' },
+    { id: 'infinite', label: 'Infinite' },
   ];
 
   const difficulties = [
@@ -177,11 +185,27 @@ export default function Header({
         type="button"
         className="theme-toggle"
         onClick={toggleTheme}
-        aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+        aria-label="Switch theme"
+        title={`Switch theme (Current: ${theme.charAt(0).toUpperCase() + theme.slice(1)})`}
       >
-        {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        {theme === 'light' && <Sun className="w-4 h-4" />}
+        {theme === 'dark' && <Moon className="w-4 h-4" />}
+        {theme === 'matcha' && <Leaf className="w-4 h-4" />}
+        {theme === 'midnight' && <Stars className="w-4 h-4" />}
+        {theme === 'sakura' && <Flower2 className="w-4 h-4" />}
+        {theme === 'sand' && <Waves className="w-4 h-4" />}
       </button>
+      {onSettings && (
+        <button
+          type="button"
+          className="icon-button"
+          onClick={onSettings}
+          aria-label="Open practice settings"
+          title="Practice settings"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
+      )}
     </header>
   );
 }

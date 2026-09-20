@@ -128,6 +128,39 @@ export default function App() {
     fetchPassage('all', 'all');
   }, [fetchPassage]);
 
+  const isFetchingInfiniteRef = useRef(false);
+
+  const handleNearEnd = useCallback(async () => {
+    if (category !== 'infinite' || isFetchingInfiniteRef.current) return;
+    
+    isFetchingInfiniteRef.current = true;
+    try {
+      const activeSettings = settingsRef.current;
+      const params = new URLSearchParams();
+      if (activeSettings.passageLength !== 'any') params.append('length', activeSettings.passageLength);
+      if (userId) params.append('userId', userId);
+
+      const response = await fetch(`${API_BASE}/api/passage?${params.toString()}`, {
+        headers: userId ? { 'x-user-id': userId } : {}
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.passage) {
+          setPassage(prev => ({
+            ...prev,
+            content: prev.content + ' ' + data.passage.content
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch infinite passage chunk:', err);
+    } finally {
+      setTimeout(() => {
+        isFetchingInfiniteRef.current = false;
+      }, 2000);
+    }
+  }, [category, userId]);
+
   // Filter change handlers
   const handleCategoryChange = (newCat) => {
     setIsZenTyping(false);
@@ -366,6 +399,7 @@ export default function App() {
               passage={passage}
               onComplete={handleSessionComplete}
               onRestart={handleRestart}
+              onNearEnd={handleNearEnd}
               onTypingStateChange={setIsZenTyping}
               isZenMode={zenTypingActive}
               settings={settings}

@@ -2,8 +2,20 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { RotateCcw, AlertCircle } from 'lucide-react';
 import { analyzeWeaknesses } from '../utils/weaknessAnalyzer';
 import GhostRacer from './GhostRacer';
+import { playKeystroke } from '../lib/audioEngine';
 
-export default function TypingArea({ passage, onComplete, onRestart }) {
+const ZEN_IDLE_TIMEOUT_MS = 2500;
+
+export default function TypingArea({
+  passage,
+  onComplete,
+  onRestart,
+  onNearEnd,
+  onTypingStateChange,
+  isZenMode = false,
+  settings,
+  zenIdleDelay = ZEN_IDLE_TIMEOUT_MS
+}) {
   const [typed, setTyped] = useState('');
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
@@ -16,11 +28,49 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
   const lastKeyTimeRef = useRef(null);
   const inputRef = useRef(null);
   const timerRef = useRef(null);
+  const zenIdleTimerRef = useRef(null);
+  const mountedRef = useRef(false);
 
   const targetText = passage?.content || '';
 
+  const clearZenIdleTimer = useCallback(() => {
+    if (zenIdleTimerRef.current) {
+      clearTimeout(zenIdleTimerRef.current);
+      zenIdleTimerRef.current = null;
+    }
+  }, []);
+
+  const exitZenTyping = useCallback(() => {
+    clearZenIdleTimer();
+    if (mountedRef.current) {
+      onTypingStateChange?.(false);
+    }
+  }, [clearZenIdleTimer, onTypingStateChange]);
+
+  const refreshZenTyping = useCallback(() => {
+    if (!mountedRef.current) return;
+
+    clearZenIdleTimer();
+    onTypingStateChange?.(true);
+    zenIdleTimerRef.current = setTimeout(() => {
+      zenIdleTimerRef.current = null;
+      if (mountedRef.current) {
+        onTypingStateChange?.(false);
+      }
+    }, Math.max(1000, Number(zenIdleDelay) || ZEN_IDLE_TIMEOUT_MS));
+  }, [clearZenIdleTimer, onTypingStateChange, zenIdleDelay]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearZenIdleTimer();
+    };
+  }, [clearZenIdleTimer]);
+
   // Reset session
   const resetSession = useCallback(() => {
+    exitZenTyping();
     setTyped('');
     setStartTime(null);
     setEndTime(null);
@@ -35,7 +85,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [exitZenTyping]);
 
   // Handle timer tick
   useEffect(() => {
@@ -95,6 +145,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
     if (e.ctrlKey || e.altKey || e.metaKey) {
       if (e.key === 'Backspace') {
         e.preventDefault();
+        refreshZenTyping();
         // Delete previous word
         setTyped((prev) => {
           const trimmed = prev.trimEnd();
@@ -108,6 +159,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
     // Handle Backspace
     if (e.key === 'Backspace') {
       e.preventDefault();
+      refreshZenTyping();
       setTyped((prev) => prev.slice(0, -1));
       return;
     }
@@ -127,6 +179,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
       return;
     }
 
+    refreshZenTyping();
     const expectedChar = targetText[currentIndex];
     const isCorrect = char === expectedChar;
     const now = Date.now();
@@ -155,10 +208,14 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
       latency
     });
 
+    if (settings?.soundTheme && settings.soundTheme !== 'none') {
+      playKeystroke(settings.soundTheme);
+    }
+
     const newTyped = typed + char;
     setTyped(newTyped);
 
-    // Check for completion
+      // Check for completion
     if (newTyped.length === targetText.length) {
       const finalEndTime = now;
       setEndTime(finalEndTime);
@@ -178,6 +235,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
       // Compute weakness analysis profile
       const weaknessProfile = analyzeWeaknesses(keystrokesRef.current, targetText);
 
+      exitZenTyping();
       onComplete({
         wpm: finalWpm,
         rawWpm: finalRawWpm,
@@ -187,10 +245,13 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
         correctChars: finalCorrect,
         errorCount: totalErrors + (isCorrect ? 0 : 1),
         keystrokes: keystrokesRef.current,
+        replay: keystrokesRef.current,
         weaknesses: weaknessProfile.topWeaknesses,
         weaknessSummary: weaknessProfile.summary,
         passage
       });
+    } else if (onNearEnd && newTyped.length >= targetText.length - 150) {
+      onNearEnd();
     }
   };
 
@@ -229,7 +290,7 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
   const currentIndex = typed.length;
 
   return (
-    <div className="typing-shell">
+    <div className={`typing-shell${isZenMode ? ' is-zen-active' : ''}`}>
       {/* Hidden input to capture keystrokes */}
       <input
         ref={inputRef}
@@ -237,7 +298,10 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
         className="absolute -top-[9999px] left-0 opacity-0 pointer-events-none"
         onKeyDown={handleKeyDown}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onBlur={() => {
+          setIsFocused(false);
+          exitZenTyping();
+        }}
         autoFocus
         autoComplete="off"
         autoCorrect="off"
@@ -312,7 +376,13 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
 
         {/* Typing Canvas */}
         <div className="typing-surface">
-          <div className="typing-copy">
+          <div
+            className="typing-copy"
+            style={{
+              fontSize: `${settings?.typingFontSize || 22}px`,
+              lineHeight: settings?.lineHeight || 1.8
+            }}
+          >
           {words.map(({ chars, space, wordIndex }) => {
             const wordStart = chars[0]?.index ?? space?.index;
             const wordEnd = space?.index ?? chars[chars.length - 1]?.index;
@@ -328,8 +398,13 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
                 let charClass = 'char-pending';
                 if (isCorrect) {
                   charClass = 'char-correct';
+                  if (settings?.zenModeType === 'fade') charClass += ' opacity-0 transition-opacity duration-1000';
                 } else if (isIncorrect) {
                   charClass = 'char-error';
+                }
+
+                if (!isTyped && settings?.zenModeType === 'blind') {
+                  charClass += ' blur-sm opacity-20';
                 }
 
                 return (
@@ -377,28 +452,33 @@ export default function TypingArea({ passage, onComplete, onRestart }) {
 
       {/* Ghost Racer Subtle Progress Line */}
       <GhostRacer
+        key={settings?.ghostDefaultWpm || 65}
         targetText={targetText}
         userTypedLength={typed.length}
         userStartTime={startTime}
         isUserCompleted={Boolean(endTime || (targetText.length > 0 && typed.length === targetText.length))}
         userWpm={liveWpm}
+        defaultSkillWpm={settings?.ghostDefaultWpm}
+        isZenMode={isZenMode}
         className=""
       />
 
       {/* Subtle bottom control hint */}
-      <div className="typing-footer">
-        <div className="typing-shortcuts">
-          <span><kbd className="kbd">Tab</kbd> restart</span>
-          <span><kbd className="kbd">Ctrl+Backspace</kbd> delete word</span>
+      {!isZenMode && (
+        <div className="typing-footer quiet-appear">
+          <div className="typing-shortcuts">
+            <span><kbd className="kbd">Tab</kbd> restart</span>
+            <span><kbd className="kbd">Ctrl+Backspace</kbd> delete word</span>
+          </div>
+          <button
+            onClick={resetSession}
+            className="reset-button"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>reset</span>
+          </button>
         </div>
-        <button
-          onClick={resetSession}
-          className="reset-button"
-        >
-          <RotateCcw className="w-3 h-3" />
-          <span>reset</span>
-        </button>
-      </div>
+      )}
     </div>
   );
 }

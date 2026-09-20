@@ -9,7 +9,7 @@ export default function PassageInfo({ passage }) {
   const getDifficultyClass = (diff) => `passage-difficulty is-${diff?.toLowerCase() || 'medium'}`;
 
   return (
-    <div className="passage-info">
+    <div className="passage-info quiet-appear">
       <div className="flex items-center gap-2 flex-wrap">
         {isDrill ? (
           <Sparkles className="w-4 h-4" />

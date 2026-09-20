@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
 import { RotateCcw, ArrowRight, Zap, Target, Clock, CheckCircle2, Sparkles, Brain, Activity } from 'lucide-react';
+import GoalProgress from './GoalProgress';
+import PracticeQueue from './PracticeQueue';
+import ReplayAnalysis from './ReplayAnalysis';
 
-export default function SessionComplete({ stats, onRestart, onNext, onNextStandard, onViewDashboard }) {
+export default function SessionComplete({ stats, onRestart, onNext, onNextStandard, onViewDashboard, onStartQueueItem }) {
   const {
     wpm = 0,
     rawWpm = 0,
@@ -234,6 +237,12 @@ export default function SessionComplete({ stats, onRestart, onNext, onNextStanda
               <span>Dashboard</span>
             </button>
           )}
+        </div>
+
+        <div className="completion-followup">
+          <GoalProgress compact />
+          <ReplayAnalysis replay={stats?.replay || stats?.keystrokes} />
+          <PracticeQueue onStart={onStartQueueItem} />
         </div>
       </div>
     </div>

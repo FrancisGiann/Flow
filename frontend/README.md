@@ -10,8 +10,14 @@ Features:
 - distraction-free passage typing with WPM, accuracy, time, caret, and active-word breathline feedback;
 - optional Ghost Racer pacing instrument with adjustable opponent speed;
 - completion analysis with weakness detection and targeted AI drills;
+- adaptive local-first practice queue that deduplicates weak spots and falls back to targeted drills offline;
+- accessible practice settings for reading rhythm, Zen timing, Ghost pace, passage length, goals, and optional focus sounds;
+- validated custom passages for plain text or code, saved locally with title, source, and difficulty metadata;
+- daily minutes goals, optional WPM/accuracy targets, quiet streaks, and compact completion updates;
+- bounded replay analysis with segment-level pause/error inspection;
 - progression dashboard with coach narration, KPIs, speed chart, weakness drills, and session history;
-- persisted light/dark theme toggle with system preference fallback and keyboard-accessible controls.
+- persisted light/dark theme toggle with system preference fallback and keyboard-accessible controls;
+- installable production app shell with versioned static caching and network-only API requests.
 
 ## Development
 

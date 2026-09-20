@@ -24,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { addQueueItems } from '../lib/flowLocal';
 import GoalProgress from './GoalProgress';
 import PracticeQueue from './PracticeQueue';
+import KeyboardHeatmap from './KeyboardHeatmap';
 
 export default function Dashboard({ onStartTyping, onStartDrill }) {
   const { user, userId, isAnonymous, isConfigured, upgradeAccount, signInWithOtp, signOut } = useAuth();
@@ -760,6 +761,8 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
             </button>
           )}
         </div>
+
+        <KeyboardHeatmap weaknesses={weaknesses} />
 
         {weaknesses.length > 0 ? (
           <div className="dashboard-weakness-grid">
