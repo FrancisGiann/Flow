@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 import {
   Sparkles,
   Target,
@@ -19,6 +21,9 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { addQueueItems } from '../lib/flowLocal';
+import GoalProgress from './GoalProgress';
+import PracticeQueue from './PracticeQueue';
 
 export default function Dashboard({ onStartTyping, onStartDrill }) {
   const { user, userId, isAnonymous, isConfigured, upgradeAccount, signInWithOtp, signOut } = useAuth();
@@ -45,24 +50,25 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
       const headers = userId ? { 'x-user-id': userId } : {};
 
       // 1. Fetch sessions
-      const sessionsRes = await fetch(`/api/sessions${uidParam}`, { headers });
+      const sessionsRes = await fetch(`${API_BASE}/api/sessions${uidParam}`, { headers });
       const sessionsData = sessionsRes.ok ? await sessionsRes.json() : { sessions: [] };
       const loadedSessions = sessionsData.sessions || [];
       setSessions(loadedSessions);
 
       // 2. Fetch weaknesses
-      const weaknessesRes = await fetch(`/api/weaknesses${uidParam}`, { headers });
+      const weaknessesRes = await fetch(`${API_BASE}/api/weaknesses${uidParam}`, { headers });
       const weaknessesData = weaknessesRes.ok ? await weaknessesRes.json() : { weaknesses: [] };
       const loadedWeaknesses = weaknessesData.weaknesses || [];
       setWeaknesses(loadedWeaknesses);
+      addQueueItems(loadedWeaknesses);
 
       // 3. Fetch aggregated stats
-      const statsRes = await fetch(`/api/stats${uidParam}`, { headers });
+      const statsRes = await fetch(`${API_BASE}/api/stats${uidParam}`, { headers });
       const statsData = statsRes.ok ? await statsRes.json() : null;
       setStats(statsData);
 
       // 4. Fetch AI progress narration
-      const narrationRes = await fetch(`/api/progress-narration${uidParam}`, { headers });
+      const narrationRes = await fetch(`${API_BASE}/api/progress-narration${uidParam}`, { headers });
       const narrationData = narrationRes.ok ? await narrationRes.json() : null;
       setNarration(narrationData);
     } catch (err) {
@@ -82,7 +88,7 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
     try {
       const uidParam = userId ? `?userId=${encodeURIComponent(userId)}` : '';
       const headers = userId ? { 'x-user-id': userId } : {};
-      const response = await fetch(`/api/progress-narration${uidParam}`, { headers });
+      const response = await fetch(`${API_BASE}/api/progress-narration${uidParam}`, { headers });
       if (response.ok) {
         const data = await response.json();
         setNarration(data);
@@ -477,6 +483,11 @@ export default function Dashboard({ onStartTyping, onStartDrill }) {
           </button>
         </div>
       )}
+
+      <div className="dashboard-practice-tools">
+        <GoalProgress />
+        <PracticeQueue onStart={(item) => onStartDrill?.([item])} />
+      </div>
 
       <div className="dashboard-overview-grid">
       {/* AI Progress Narration Hero */}

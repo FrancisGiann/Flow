@@ -1,11 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import PassageInfo from './components/PassageInfo';
 import TypingArea from './components/TypingArea';
 import SessionComplete from './components/SessionComplete';
 import Dashboard from './components/Dashboard';
 import Footer from './components/Footer';
+import SettingsPanel from './components/SettingsPanel';
 import { useAuth } from './context/AuthContext';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
+import {
+  addQueueItems,
+  deleteCustomPassage,
+  getCustomPassages,
+  getGoals,
+  getSettings,
+  makeLocalDrill,
+  recordSession,
+  resetSettings,
+  saveCustomPassage,
+  saveGoals,
+  saveSettings,
+  useFlowLocalVersion
+} from './lib/flowLocal';
 
 // Fallback passages in case backend is unreachable during dev
 const FALLBACK_PASSAGES = [
@@ -38,6 +55,11 @@ const FALLBACK_PASSAGES = [
 
 export default function App() {
   const { userId } = useAuth();
+  useFlowLocalVersion();
+  const settings = getSettings();
+  const goals = getGoals();
+  const customPassages = getCustomPassages();
+  const settingsRef = useRef(settings);
   const [currentView, setCurrentView] = useState('type'); // 'type' | 'dashboard'
   const [passage, setPassage] = useState(null);
   const [category, setCategory] = useState('all');
@@ -45,17 +67,31 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [sessionStats, setSessionStats] = useState(null);
   const [sessionCount, setSessionCount] = useState(0);
+  const [isZenTyping, setIsZenTyping] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  const handleViewChange = useCallback((view) => {
+    setIsZenTyping(false);
+    setCurrentView(view);
+  }, []);
 
   // Fetch passage from backend
-  const fetchPassage = useCallback(async (cat = category, diff = difficulty) => {
+  const fetchPassage = useCallback(async (cat = 'all', diff = 'all') => {
+    setIsZenTyping(false);
     setLoading(true);
+    const activeSettings = settingsRef.current;
     try {
       const params = new URLSearchParams();
       if (cat && cat !== 'all') params.append('category', cat);
       if (diff && diff !== 'all') params.append('difficulty', diff);
+      if (activeSettings.passageLength !== 'any') params.append('length', activeSettings.passageLength);
       if (userId) params.append('userId', userId);
 
-      const response = await fetch(`/api/passage?${params.toString()}`, {
+      const response = await fetch(`${API_BASE}/api/passage?${params.toString()}`, {
         headers: userId ? { 'x-user-id': userId } : {}
       });
       if (!response.ok) {
@@ -73,6 +109,9 @@ export default function App() {
       const filtered = FALLBACK_PASSAGES.filter(p => {
         if (cat !== 'all' && p.category !== cat) return false;
         if (diff !== 'all' && p.difficulty !== diff) return false;
+        if (activeSettings.passageLength === 'short' && p.content.length >= 350) return false;
+        if (activeSettings.passageLength === 'medium' && (p.content.length < 350 || p.content.length >= 800)) return false;
+        if (activeSettings.passageLength === 'long' && p.content.length < 800) return false;
         return true;
       });
       const chosen = filtered.length > 0
@@ -82,7 +121,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [category, difficulty, userId]);
+  }, [userId]);
 
   // Initial load
   useEffect(() => {
@@ -91,12 +130,14 @@ export default function App() {
 
   // Filter change handlers
   const handleCategoryChange = (newCat) => {
+    setIsZenTyping(false);
     setCategory(newCat);
     setSessionStats(null);
     fetchPassage(newCat, difficulty);
   };
 
   const handleDifficultyChange = (newDiff) => {
+    setIsZenTyping(false);
     setDifficulty(newDiff);
     setSessionStats(null);
     fetchPassage(category, newDiff);
@@ -104,11 +145,19 @@ export default function App() {
 
   // Flow completion & telemetry recording
   const handleSessionComplete = (stats) => {
+    setIsZenTyping(false);
     setSessionStats(stats);
     setSessionCount(prev => prev + 1);
+    recordSession({
+      ...stats,
+      replay: stats.replay || stats.keystrokes,
+      passageTitle: stats.passage?.title,
+      mode: stats.passage?.category === 'drill' ? 'drill' : 'passage'
+    });
+    addQueueItems(stats.weaknesses);
 
     // Asynchronously record session to backend
-    fetch('/api/session', {
+    fetch(`${API_BASE}/api/session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -137,12 +186,14 @@ export default function App() {
 
   // Restart current passage
   const handleRestart = () => {
+    setIsZenTyping(false);
     setSessionStats(null);
     setCurrentView('type');
   };
 
   // Next passage handler: if weaknesses exist, generate AI drill
   const handleNext = async () => {
+    setIsZenTyping(false);
     const weaknesses = sessionStats?.weaknesses;
     setSessionStats(null);
     setCurrentView('type');
@@ -150,7 +201,7 @@ export default function App() {
     if (weaknesses && weaknesses.length > 0) {
       setLoading(true);
       try {
-        const response = await fetch('/api/drill', {
+        const response = await fetch(`${API_BASE}/api/drill`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -169,18 +220,25 @@ export default function App() {
           return;
         }
       } catch (err) {
-        console.warn('Could not generate AI drill, falling back to standard passage:', err);
+        console.warn('Could not generate AI drill, falling back to a local targeted drill:', err);
       } finally {
         setLoading(false);
       }
     }
 
-    // Fallback or default flow to standard passage
+    if (weaknesses && weaknesses.length > 0) {
+      setPassage(makeLocalDrill(weaknesses));
+      setLoading(false);
+      return;
+    }
+
+    // Default flow to a standard passage
     fetchPassage(category, difficulty);
   };
 
   // Explicit next standard passage (skip drill)
   const handleNextStandard = () => {
+    setIsZenTyping(false);
     setSessionStats(null);
     setCurrentView('type');
     fetchPassage(category, difficulty);
@@ -188,12 +246,13 @@ export default function App() {
 
   // Launch AI drill for specific weaknesses directly from dashboard
   const handleStartDrill = async (targetWeaknesses = []) => {
+    setIsZenTyping(false);
     setLoading(true);
     setSessionStats(null);
     setCurrentView('type');
 
     try {
-      const response = await fetch('/api/drill', {
+      const response = await fetch(`${API_BASE}/api/drill`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,29 +274,75 @@ export default function App() {
       setLoading(false);
     }
 
-    fetchPassage('drill', difficulty);
+    setPassage(makeLocalDrill(targetWeaknesses));
+    setLoading(false);
   };
+
+  const handleSelectCustomPassage = (customPassage) => {
+    setIsZenTyping(false);
+    setSessionStats(null);
+    setLoading(false);
+    setPassage(customPassage);
+    setSessionCount((count) => count + 1);
+    setCurrentView('type');
+    setSettingsOpen(false);
+  };
+
+  const handleSaveCustomPassage = (customPassage) => {
+    saveCustomPassage(customPassage);
+  };
+
+  const handleDeleteCustomPassage = (id) => {
+    deleteCustomPassage(id);
+  };
+
+  const handleSaveSettings = (nextSettings) => saveSettings(nextSettings);
+  const handleSaveGoals = (nextGoals) => saveGoals(nextGoals);
+  const handleResetSettings = () => resetSettings();
+
+  const zenTypingActive = isZenTyping && currentView === 'type' && !loading && !sessionStats && Boolean(passage);
 
   return (
     <div className="app-shell flex flex-col justify-between">
       {/* Top Header */}
-      <Header
-        currentView={currentView}
-        setCurrentView={setCurrentView}
-        category={category}
-        setCategory={handleCategoryChange}
-        difficulty={difficulty}
-        setDifficulty={handleDifficultyChange}
-        onReset={handleRestart}
-        onNext={handleNext}
-        isTyping={Boolean(!sessionStats && passage && currentView === 'type')}
-      />
+      <div
+        className={`chrome-bar${zenTypingActive ? ' is-zen-hidden' : ''}`}
+        aria-hidden={zenTypingActive}
+        inert={zenTypingActive ? true : undefined}
+      >
+        <Header
+          currentView={currentView}
+          setCurrentView={handleViewChange}
+          category={category}
+          setCategory={handleCategoryChange}
+          difficulty={difficulty}
+          setDifficulty={handleDifficultyChange}
+          onReset={handleRestart}
+          onNext={handleNext}
+          onSettings={() => setSettingsOpen(true)}
+        />
+      </div>
+
+      {settingsOpen && (
+        <SettingsPanel
+          settings={settings}
+          goals={goals}
+          customPassages={customPassages}
+          onSaveSettings={handleSaveSettings}
+          onSaveGoals={handleSaveGoals}
+          onResetSettings={handleResetSettings}
+          onSavePassage={handleSaveCustomPassage}
+          onDeletePassage={handleDeleteCustomPassage}
+          onSelectPassage={handleSelectCustomPassage}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
 
       {/* Main Content Area */}
       <main className="app-main flex-1 flex flex-col items-center">
         {currentView === 'dashboard' ? (
           <Dashboard
-            onStartTyping={() => setCurrentView('type')}
+            onStartTyping={() => handleViewChange('type')}
             onStartDrill={handleStartDrill}
           />
         ) : loading ? (
@@ -250,23 +355,34 @@ export default function App() {
             onRestart={handleRestart}
             onNext={handleNext}
             onNextStandard={handleNextStandard}
-            onViewDashboard={() => setCurrentView('dashboard')}
+            onViewDashboard={() => handleViewChange('dashboard')}
+            onStartQueueItem={(item) => handleStartDrill([item])}
           />
         ) : passage ? (
           <div className="typing-view">
-            <PassageInfo passage={passage} isTyping={false} />
+            {!zenTypingActive && <PassageInfo passage={passage} />}
             <TypingArea
               key={`${passage.id || passage.title}-${sessionCount}`}
               passage={passage}
               onComplete={handleSessionComplete}
               onRestart={handleRestart}
+              onTypingStateChange={setIsZenTyping}
+              isZenMode={zenTypingActive}
+              settings={settings}
+              zenIdleDelay={settings.zenIdleDelay}
             />
           </div>
         ) : null}
       </main>
 
       {/* Zen Footer */}
-      <Footer />
+      <div
+        className={`chrome-bar${zenTypingActive ? ' is-zen-hidden' : ''}`}
+        aria-hidden={zenTypingActive}
+        inert={zenTypingActive ? true : undefined}
+      >
+        <Footer />
+      </div>
     </div>
   );
 }
