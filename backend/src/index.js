@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const passageRoutes = require('./routes/passage');
@@ -27,9 +28,21 @@ app.use('/api', passageRoutes);
 app.use('/api', sessionRoutes);
 app.use('/api', drillRoutes);
 
-// Fallback 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+// Serve static frontend files
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// Catch-all route to serve the React app for non-API requests
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+
+// Fallback 404 handler for API routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API Endpoint not found' });
 });
 
 // Global error handler
